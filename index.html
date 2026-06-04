@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Diddy's RNG</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/style.css">
+  </head>
+  <body>
+    <div class="stars" id="stars"></div>
+
+    <!-- ═══ AUTH GATE SCREENS ═══ -->
+
+    <!-- Register / Login -->
+    <div class="gate-screen" id="authScreen">
+      <div class="gate-card">
+        <h1 class="gate-logo">DIDDY'S <span class="logo-accent">RNG</span></h1>
+        <p class="gate-sub">Made by Custom Studios</p>
+        <div class="gate-tabs">
+          <button class="gate-tab active" id="tabRegister" onclick="switchAuthTab('register')">Register</button>
+          <button class="gate-tab" id="tabLogin" onclick="switchAuthTab('login')">Login</button>
+        </div>
+
+        <!-- Register form -->
+        <div id="registerForm">
+          <input class="gate-input" id="regEmail" type="email" placeholder="Email address" autocomplete="email">
+          <input class="gate-input" id="regPassword" type="password" placeholder="Password (min 6 chars)" autocomplete="new-password">
+          <input class="gate-input" id="regConfirm" type="password" placeholder="Confirm password" autocomplete="new-password">
+          <button class="gate-btn" id="registerBtn" onclick="doRegister()">Create Account</button>
+        </div>
+
+        <!-- Login form -->
+        <div id="loginForm" class="hidden">
+          <input class="gate-input" id="loginEmail" type="email" placeholder="Email address" autocomplete="email">
+          <input class="gate-input" id="loginPassword" type="password" placeholder="Password" autocomplete="current-password">
+          <button class="gate-btn" id="loginBtn" onclick="doLogin()">Sign In</button>
+        </div>
+
+        <div class="gate-error" id="authError"></div>
+      </div>
+    </div>
+
+    <!-- Verify Email -->
+    <div class="gate-screen hidden" id="verifyScreen">
+      <div class="gate-card">
+        <div class="gate-icon">📧</div>
+        <h2 class="gate-heading">Check Your Email</h2>
+        <p class="gate-hint" id="verifyHint">Enter the 6-digit code sent to your email.</p>
+        <div class="gate-code-row">
+          <input class="gate-input gate-code-input" id="verifyCode" type="text" inputmode="numeric" maxlength="6" placeholder="123456">
+        </div>
+        <div class="gate-dev-code" id="devCodeBox"></div>
+        <button class="gate-btn" onclick="doVerify()">Verify Email</button>
+        <button class="gate-link" onclick="showScreen('auth')">← Back to Login</button>
+        <div class="gate-error" id="verifyError"></div>
+      </div>
+    </div>
+
+    <!-- Landing -->
+    <div class="gate-screen hidden" id="landingScreen">
+      <div class="landing-card">
+        <div class="landing-logo-wrap">
+          <h1 class="landing-logo">DIDDY'S <span class="logo-accent">RNG</span></h1>
+          <p class="landing-sub">Made by Custom Studios</p>
+        </div>
+        <div class="landing-stars-dec">✦ ✦ ✦ ✦ ✦</div>
+        <p class="landing-user" id="landingUser"></p>
+        <button class="landing-play-btn" onclick="showScreen('game')">▶ PLAY</button>
+        <button class="gate-link" onclick="doLogout()">Sign Out</button>
+
+        <!-- Leaderboard -->
+        <div class="lb-section">
+          <div class="lb-header">
+            <span class="lb-title">🏆 Top Rollers</span>
+            <button class="lb-refresh-btn" onclick="fetchLeaderboard()" title="Refresh">↻</button>
+          </div>
+          <div class="lb-list" id="lbList">
+            <div class="lb-loading">Loading leaderboard…</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Banned -->
+    <div class="gate-screen hidden" id="bannedScreen">
+      <div class="gate-card">
+        <div class="gate-icon">🚫</div>
+        <h2 class="gate-heading" style="color:#ff5f87">You've Been Banned</h2>
+        <p class="gate-hint" id="banReason">No reason provided.</p>
+        <button class="gate-link" onclick="doLogout()">Sign Out</button>
+      </div>
+    </div>
+
+    <!-- Game -->
+    <div class="app hidden" id="gameApp">
+      <!-- Header -->
+      <header class="header">
+        <div class="logo-wrap">
+          <h1 class="logo">DIDDY'S <span class="logo-accent">RNG</span></h1>
+          <div class="logo-sub">Made by Custom Studios</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <span class="header-user-badge" id="headerUser"></span>
+          <button class="admin-btn" id="adminBtn">⚙ Admin</button>
+        </div>
+      </header>
+
+      <!-- Event Banner -->
+      <div class="event-banner hidden" id="eventBanner">
+        <div class="event-icon-wrap" id="eventIconWrap">✨</div>
+        <div class="event-info">
+          <div class="event-name" id="eventName">Lucky Hour!</div>
+          <div class="event-desc" id="eventDesc">All rare chances tripled!</div>
+        </div>
+        <div class="event-timer-wrap">
+          <div class="event-timer" id="eventTimer">60</div>
+          <div class="event-timer-label">seconds</div>
+        </div>
+      </div>
+
+      <!-- Hero: Noob + Roll -->
+      <section class="hero">
+        <!-- Noob Character -->
+        <div class="noob-scene" id="noobScene">
+          <!-- Aura rings (behind character) -->
+          <div class="aura-orbit orbit-4" id="auraOrbit4"></div>
+          <div class="aura-orbit orbit-3" id="auraOrbit3"></div>
+          <div class="aura-orbit orbit-2" id="auraOrbit2"></div>
+          <div class="aura-orbit orbit-1" id="auraOrbit1"></div>
+          <div class="aura-glow" id="auraGlow"></div>
+          <div class="aura-particles" id="auraParticles"></div>
+
+          <!-- Noob body -->
+          <div class="noob" id="noob">
+            <div class="noob-head">
+              <div class="noob-eye noob-eye-l"></div>
+              <div class="noob-eye noob-eye-r"></div>
+              <div class="noob-mouth"></div>
+            </div>
+            <div class="noob-mid">
+              <div class="noob-arm noob-arm-l"></div>
+              <div class="noob-torso">
+                <div class="noob-shirt-stripe"></div>
+              </div>
+              <div class="noob-arm noob-arm-r"></div>
+            </div>
+            <div class="noob-legs">
+              <div class="noob-leg noob-leg-l"></div>
+              <div class="noob-leg noob-leg-r"></div>
+            </div>
+          </div>
+
+          <!-- Equipped label below noob -->
+          <div class="equipped-tag" id="equippedTag">
+            <span id="equippedTagText">No aura equipped</span>
+          </div>
+        </div>
+
+        <!-- Roll Controls -->
+        <div class="roll-controls">
+          <div class="last-roll-display" id="lastRollDisplay">
+            <span class="last-roll-icon" id="lastRollIcon">🌟</span>
+            <span class="last-roll-name" id="lastRollName">???</span>
+            <span class="last-roll-rarity" id="lastRollRarity" style="color:var(--text-dim)">Roll to discover your fate</span>
+          </div>
+
+          <button class="roll-btn" id="rollBtn">
+            <span class="roll-btn-inner" id="rollBtnText">ROLL</span>
+          </button>
+
+          <!-- Lucky Boost (free, anyone can use) -->
+          <div class="lucky-boost-row">
+            <button class="lucky-boost-btn" id="luckyBoostBtn">🍀 LUCKY BOOST</button>
+            <span class="lucky-boost-hint" id="luckyBoostHint">3× luck for 20s — free!</span>
+          </div>
+
+          <!-- Auto Roll Controls -->
+          <div class="auto-roll-row">
+            <button class="auto-roll-btn" id="autoRollBtn">⟳ AUTO ROLL</button>
+            <select class="auto-speed-select" id="autoSpeedSelect">
+              <option value="2000">Slow (2s)</option>
+              <option value="1000" selected>Normal (1s)</option>
+              <option value="500">Fast (0.5s)</option>
+              <option value="200">Turbo (0.2s)</option>
+              <option value="100">Ultra (0.1s)</option>
+            </select>
+          </div>
+
+          <div class="stats-row">
+            <span class="stat-item">Rolls: <b id="totalRolls">0</b></span>
+            <span class="stat-sep">|</span>
+            <span class="stat-item">Luck: <b id="multiplierDisplay" class="stat-accent">1×</b></span>
+            <span class="stat-sep" id="autoStatSep" style="display:none">|</span>
+            <span class="stat-item" id="autoStatItem" style="display:none">Auto: <b id="autoRollsDisplay" class="stat-accent">0</b></span>
+          </div>
+          <div class="roll-history" id="rollHistory"></div>
+        </div>
+      </section>
+
+      <!-- Mutations Table -->
+      <section class="panel mutations-panel">
+        <h2 class="panel-title">Mutations</h2>
+        <div class="mut-table" id="mutationsTable"></div>
+      </section>
+
+      <!-- Bottom Grid: Rarity Table + Inventory -->
+      <div class="bottom-grid">
+        <!-- Rarity Table -->
+        <section class="panel rarity-panel">
+          <h2 class="panel-title">Rarity Table</h2>
+          <div class="rarity-table" id="rarityTable"></div>
+        </section>
+
+        <!-- Inventory -->
+        <section class="panel inventory-panel">
+          <div class="inv-header">
+            <h2 class="panel-title">Inventory <span class="inv-count" id="invCount">(0 items)</span></h2>
+            <div style="display:flex;align-items:center;gap:8px">
+              <button class="equip-best-btn" id="equipBestBtn" title="Equip your highest-rarity item">⚡ Equip Best</button>
+              <div class="inv-equipped-badge hidden" id="invEquippedBadge">
+                <span id="invEquippedName">—</span>
+              </div>
+            </div>
+          </div>
+          <div class="inventory-grid" id="inventoryGrid">
+            <div class="inv-empty">Roll to start collecting items!</div>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <!-- Admin Modal -->
+    <div class="modal-overlay hidden" id="adminModal">
+      <div class="modal admin-modal">
+        <div class="modal-header">
+          <h2>⚙ Admin Panel</h2>
+          <button class="modal-close" id="adminClose">✕</button>
+        </div>
+        <div class="modal-body" id="adminBody">
+          <!-- Lock screen -->
+          <div id="adminLock">
+            <p class="admin-hint">Enter the admin passcode to continue.</p>
+            <input type="password" class="admin-input" id="adminPasscode" placeholder="Enter passcode..." autocomplete="off">
+            <button class="admin-submit-btn" id="adminSubmit">Unlock</button>
+            <div class="admin-error" id="adminError"></div>
+          </div>
+          <!-- Admin tools -->
+          <div id="adminTools" class="hidden">
+            <div class="admin-unlocked-badge">✓ Admin Unlocked</div>
+            <div class="admin-tools-list">
+
+              <!-- Give Item -->
+              <div class="admin-card">
+                <h3>🎁 Give Item</h3>
+                <p>Grant a rarity item (with optional mutation) to inventory.</p>
+                <div class="admin-row">
+                  <select class="admin-select" id="giveRaritySelect" style="flex:2"></select>
+                  <input type="number" class="admin-num" id="giveQty" value="1" min="1" max="999" title="Quantity" style="flex:0 0 56px">
+                </div>
+                <div class="admin-row" style="margin-top:6px">
+                  <select class="admin-select" id="giveMutationSelect" style="flex:1"></select>
+                </div>
+                <button class="admin-action-btn give-btn" id="giveItemBtn">Give Item</button>
+              </div>
+
+              <!-- Luck Multiplier -->
+              <div class="admin-card">
+                <h3>⚡ Luck Multiplier</h3>
+                <p>Type any number OR click a preset, then hit Apply.</p>
+                <div class="admin-row" style="align-items:center;gap:8px">
+                  <input type="number" class="admin-num" id="luckValueInput" min="1" max="9999999" value="1" style="flex:1;font-size:1.1rem;text-align:center">
+                  <span style="color:#ffd700;font-family:'Orbitron',monospace;font-weight:900;font-size:1.1rem">×</span>
+                </div>
+                <div class="luck-presets">
+                  <button class="luck-preset" data-val="1">1×</button>
+                  <button class="luck-preset" data-val="2">2×</button>
+                  <button class="luck-preset" data-val="5">5×</button>
+                  <button class="luck-preset" data-val="10">10×</button>
+                  <button class="luck-preset" data-val="50">50×</button>
+                  <button class="luck-preset" data-val="100">100×</button>
+                  <button class="luck-preset" data-val="500">500×</button>
+                  <button class="luck-preset" data-val="1000">1000×</button>
+                </div>
+                <button class="admin-action-btn give-btn" id="setMultiplierBtn">✓ Apply Luck</button>
+                <div class="admin-luck-display">Active: <b id="adminLuckCurrent">1×</b></div>
+              </div>
+
+              <!-- Add / Remove Luck -->
+              <div class="admin-card">
+                <h3>🍀 Adjust Luck</h3>
+                <p>Add or subtract from the current multiplier.</p>
+                <div class="admin-row">
+                  <input type="number" class="admin-num" id="addLuckInput" min="1" max="9999999" value="10" style="flex:1;font-size:.95rem;text-align:center">
+                  <span style="color:var(--text-dim);align-self:center;padding:0 4px">×</span>
+                </div>
+                <div class="admin-row">
+                  <button class="admin-action-btn give-btn" id="addLuckBtn" style="flex:1">+ Add</button>
+                  <button class="admin-action-btn warn-btn" id="subLuckBtn" style="flex:1">− Remove</button>
+                </div>
+              </div>
+
+              <!-- Trigger Event -->
+              <div class="admin-card">
+                <h3>🌟 Trigger Event</h3>
+                <p>Force-start a game event immediately.</p>
+                <select class="admin-select" id="eventSelect"></select>
+                <button class="admin-action-btn give-btn" id="triggerEventBtn">Trigger Event</button>
+              </div>
+
+              <!-- Players -->
+              <div class="admin-card" id="playersCard">
+                <h3>👥 Players</h3>
+                <p>View, ban, and unban registered players.</p>
+                <button class="admin-action-btn give-btn" id="loadPlayersBtn">Load Players</button>
+                <div id="playersListWrap" class="players-list-wrap hidden">
+                  <div id="playersList"></div>
+                </div>
+              </div>
+
+              <!-- Reset Options -->
+              <div class="admin-card danger-card">
+                <h3>🗑 Reset</h3>
+                <p>Choose what to reset.</p>
+                <div class="admin-btn-group">
+                  <button class="admin-action-btn warn-btn" id="resetRollsBtn">Reset Roll Count</button>
+                  <button class="admin-action-btn warn-btn" id="endEventBtn">End Active Event</button>
+                  <button class="admin-action-btn warn-btn" id="resetMultiplierBtn">Reset Multiplier</button>
+                  <button class="admin-action-btn danger-btn" id="resetInventoryBtn">Reset Everything</button>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- Admin Log -->
+            <div class="admin-log-wrap">
+              <div class="admin-log-title">Admin Log</div>
+              <div class="admin-log" id="adminLog"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Epic Cinematic Reveal (Legendary+) -->
+    <div class="epic-reveal" id="epicReveal">
+      <div class="epic-reveal-bg" id="epicRevealBg"></div>
+      <div class="epic-reveal-rays" id="epicRevealRays"></div>
+      <div class="epic-reveal-content" id="epicRevealContent">
+        <div class="epic-reveal-icon" id="epicRevealIcon">🌟</div>
+        <div class="epic-reveal-label" id="epicRevealLabel">LEGENDARY</div>
+        <div class="epic-reveal-mut" id="epicRevealMut"></div>
+        <div class="epic-reveal-sub">You rolled something incredible...</div>
+      </div>
+    </div>
+
+    <!-- Roll Result Overlay (for rare+) -->
+    <div class="result-overlay hidden" id="resultOverlay">
+      <div class="result-card" id="resultCard">
+        <div class="result-aura-bg" id="resultAuraBg"></div>
+        <div class="result-icon" id="resultIcon">🌟</div>
+        <div class="result-label" id="resultLabel">LEGENDARY</div>
+        <div class="result-name" id="resultName">Solar Flare</div>
+        <div class="result-chance" id="resultChance">1 in 25</div>
+        <div class="result-mutation" id="resultMutation" style="display:none"></div>
+        <div class="result-actions">
+          <button class="result-equip-btn" id="resultEquipBtn">Equip Aura</button>
+          <button class="result-close-btn" id="resultClose">Continue</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="/script.js"></script>
+  </body>
+</html>
